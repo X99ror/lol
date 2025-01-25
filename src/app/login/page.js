@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import axios from "axios";
 import styles from "@/app/login/style.module.css"
 import toast from "react-hot-toast";
-import { login } from "@/redux/authSlice"; 
+import { login, logout } from "@/redux/authSlice"; 
 
 const Page = () => {
   const router = useRouter();
@@ -31,27 +31,35 @@ const Page = () => {
     setIsLoading(true);
     
     try {
-      console.log('Attempting login...');
       const { data } = await axios.post("/api/login", {
         rigId: input.rigId,
         password: input.password,
       });
-      console.log('Login response:', data);
 
       if (data.success) {
-        console.log('Dispatching login action...');
-        
-        dispatch(login());
-        
-        
-        setInput({
-          rigId: "",
-          password: "",
+        // Store the token in localStorage
+        localStorage.setItem('token', data.token);
+
+        // Verify token immediately after successful login
+        const verifyResponse = await axios.get('/api/verify-token', {
+          headers: { Authorization: `Bearer ${data.token}` }
         });
 
-        toast.success("Login successful!");
-        
-        router.push("/");
+        if (verifyResponse.data.valid) {
+          dispatch(login());
+          
+          setInput({
+            rigId: "",
+            password: "",
+          });
+
+          toast.success("Login successful!");
+          router.push("/");
+        } else {
+          toast.error("Token verification failed");
+          dispatch(logout());
+          localStorage.removeItem('token');
+        }
       } else {
         toast.error(data.message || "Login failed. Please try again.");
       }

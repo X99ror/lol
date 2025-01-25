@@ -23,6 +23,33 @@ const Navbar = () => {
   const logoRef = useRef(null);
   const rigLogoRef = useRef(null);
 
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await axios.get('/api/verify-token', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (response.data.valid) {
+            dispatch(login());
+          } else {
+            dispatch(logout());
+            localStorage.removeItem('token');
+          }
+        } else {
+          dispatch(logout());
+        }
+      } catch (error) {
+        dispatch(logout());
+        localStorage.removeItem('token');
+      }
+    };
+
+    checkAuthStatus();
+  }, [dispatch]);
+
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
   };
@@ -31,36 +58,21 @@ const Navbar = () => {
     setSidebarVisible(false);
   };
 
-  useEffect(() => {
-    const verifyToken = async () => {
-      try {
-        const response = await axios.get('/api/verify-token');
-        if (response.data.valid) {
-          dispatch(login());
-        } else {
-          dispatch(logout());
-        }
-      } catch (error) {
-        dispatch(logout());
-      }
-    };
-
-    verifyToken();
-  }, [dispatch]);
-
   const handleAuth = async () => {
     if (isLogin) {
       try {
         await axios.post("/api/logout");
         dispatch(logout());
+        localStorage.removeItem('token');
         router.push('/');
       } catch (error) {
         console.error("Logout failed", error);
       }
     } else {
-      router.push('/login'); // Redirect only when the button is clicked
+      router.push('/login');
     }
   };
+
 
   useEffect(() => {
     const isDesktop = window.innerWidth >= 1024;
@@ -120,7 +132,7 @@ const Navbar = () => {
         {/* Desktop Login/Logout Button */}
         <button
           onClick={handleAuth}
-          className={styles.authButton} // Desktop version
+          className={styles.authButton}
         >
           {isLogin ? 'Logout' : 'Login'}
         </button>
@@ -180,7 +192,7 @@ const Navbar = () => {
           {/* Mobile Login/Logout Button */}
           <button
             onClick={handleAuth}
-            className={styles.sidebarAuthButton} // Mobile version
+            className={styles.sidebarAuthButton}
           >
             {isLogin ? 'Logout' : 'Login'}
           </button>
