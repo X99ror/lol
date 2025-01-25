@@ -34,15 +34,17 @@ const Page = () => {
       const { data } = await axios.post("/api/login", {
         rigId: input.rigId,
         password: input.password,
+      }, {
+        withCredentials: true
       });
 
       if (data.success) {
-        // Store the token in localStorage
+        
         localStorage.setItem('token', data.token);
 
-        // Verify token immediately after successful login
+       
         const verifyResponse = await axios.get('/api/verify-token', {
-          headers: { Authorization: `Bearer ${data.token}` }
+          withCredentials: true
         });
 
         if (verifyResponse.data.valid) {

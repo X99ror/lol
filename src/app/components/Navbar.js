@@ -26,24 +26,17 @@ const Navbar = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.get('/api/verify-token', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (response.data.valid) {
-            dispatch(login());
-          } else {
-            dispatch(logout());
-            localStorage.removeItem('token');
-          }
+        const response = await axios.get('/api/verify-token', {
+          withCredentials: true
+        });
+        
+        if (response.data.valid) {
+          dispatch(login());
         } else {
           dispatch(logout());
         }
       } catch (error) {
         dispatch(logout());
-        localStorage.removeItem('token');
       }
     };
 
